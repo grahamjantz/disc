@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PlayerInput from './PlayerInput'; // Import the PlayerInput component
 import { FaCheck } from "react-icons/fa";
 import { GiFrisbee } from "react-icons/gi";
@@ -9,7 +9,11 @@ const App = () => {
   const [par, setPar] = useState(Array(18).fill(3));
   const [editingPar, setEditingPar] = useState(null);
   const [editingScore, setEditingScore] = useState({ hole: null, player: null, value: '' });
-  const [toggleResetModal, setToggleResetModal] = useState(false)
+  const [toggleResetModal, setToggleResetModal] = useState(false);
+
+  // Create refs for score inputs
+  const scoreInputRefs = useRef({});
+  const parInputRefs = useRef({});
 
   useEffect(() => {
     const savedPlayers = JSON.parse(localStorage.getItem('players')) || [];
@@ -24,6 +28,15 @@ const App = () => {
     setScores(updatedScores);
     setPar(savedPar);
   }, []);
+
+  useEffect(() => {
+    if (editingScore.hole !== null && editingScore.player !== null) {
+      const key = `${editingScore.hole}-${editingScore.player}`;
+      if (scoreInputRefs.current[key]) {
+        scoreInputRefs.current[key].focus();
+      }
+    }
+  }, [editingScore]);
 
   const handleAddPlayer = (playerName) => {
     setPlayers(prevPlayers => {
@@ -54,8 +67,37 @@ const App = () => {
     localStorage.setItem('par', JSON.stringify(updatedPar)); // Update localStorage after changing par
   };
 
+  // const toggleEditingPar = (holeIndex) => {
+  //   setEditingPar(editingPar === holeIndex ? null : holeIndex);
+  // };
+
   const toggleEditingPar = (holeIndex) => {
     setEditingPar(editingPar === holeIndex ? null : holeIndex);
+  
+    if (editingPar !== holeIndex) {
+      // Focus the input field when editing starts
+      setTimeout(() => {
+        const input = parInputRefs.current[holeIndex];
+        if (input) {
+          input.focus();
+          input.select(); // Optionally select the input content
+        }
+      }, 0);
+    }
+  };
+  
+
+  const handleParKeyDown = (e, holeIndex) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      savePar(holeIndex);
+    }
+  };
+
+  const savePar = (holeIndex) => {
+    const value = parInputRefs.current[holeIndex].value;
+    handleParChange(holeIndex, value);
+    setEditingPar(null);
   };
 
   const toggleEditingScore = (holeIndex, playerIndex, currentScore) => {
@@ -63,7 +105,27 @@ const App = () => {
       ? { hole: null, player: null, value: '' }
       : { hole: holeIndex, player: playerIndex, value: currentScore }
     );
+  
+    if (editingScore.hole === holeIndex && editingScore.player === playerIndex) {
+      // Ensure the text is selected when the input field is focused
+      setTimeout(() => {
+        const key = `${holeIndex}-${playerIndex}`;
+        const input = scoreInputRefs.current[key];
+        if (input) {
+          input.focus();
+          input.select(); // Select the input content
+        }
+      }, 0);
+    }
   };
+  
+
+  // const toggleEditingScore = (holeIndex, playerIndex, currentScore) => {
+  //   setEditingScore(editingScore.hole === holeIndex && editingScore.player === playerIndex
+  //     ? { hole: null, player: null, value: '' }
+  //     : { hole: holeIndex, player: playerIndex, value: currentScore }
+  //   );
+  // };
 
   const handleReset = () => {
     localStorage.removeItem('players');
@@ -74,135 +136,298 @@ const App = () => {
     setPar(Array(18).fill(3));
   };
 
+  // Submit score when Enter is pressed
+  const handleKeyDown = (e, hole, playerIndex) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveScore(hole, playerIndex);
+    }
+  };
+  
+
   return (
-    <div className="container p-4 w-screen max-w-screen overflow-hidden flex flex-col items-center ">
-      <header className='w-full flex items-center justify-center gap-4 my-8'>
-        <GiFrisbee 
+    <div className="container p-4 py-24 w-screen max-w-screen overflow-hidden flex flex-col items-center">
+      <header className='w-full fixed top-0 flex items-center justify-center gap-4 mb-8 bg-white'>
+        <GiFrisbee
           size={50}
+          className='text-blue-500'
         />
-        <h1 className="text-4xl font-bold">DiscScore</h1>
+        <h1 className="text-4xl font-bold text-blue-500">DiscScore</h1>
       </header>
 
       <PlayerInput onAddPlayer={handleAddPlayer} />
 
-      <div className='w-screen max-w-full overflow-x-scroll '>
-        <table className="table-auto w-full text-center border ">
+      <div className='w-screen max-w-full overflow-x-scroll'>
+        <table className="table-auto w-full text-center border">
           <thead>
             <tr>
-              <th className="border p-2 w-24">Hole</th>
+              <th className="border p-2 min-w-20 bg-blue-500">Hole</th>
               {players.map((player, index) => (
-                <th key={index} className="border p-2">
+                <th key={index} className="border p-1 min-w-20 max-w-20 overflow-hidden bg-blue-500">
                   {player.length > 8 ? `${player.slice(0, 8)}...` : player}
-                </th>              
+                </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {scores.map((holeScores, holeIndex) => (
-              <tr key={holeIndex}>
-                <td
-                  className="border p-2 text-center cursor-pointer w-24"
-                  onClick={() => toggleEditingPar(holeIndex)}
-                >
-                  <p>{holeIndex + 1}</p>
-                  {editingPar === holeIndex ? (
-                    <div className='flex justify-center items-center'>
-                      <input
-                        type="number"
-                        value={par[holeIndex]}
-                        onChange={(e) => handleParChange(holeIndex, e.target.value)}
-                        className="w-8 text-center border rounded"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <FaCheck
-                        className="bg-green-500 text-white p-1 ml-4 rounded"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingPar(null);
-                        }}
-                        size={20}
-                      />
-                    </div>
-                  ) : (
-                    <p>Par: {par[holeIndex]}</p>
-                  )}
-                </td>
-                {holeScores.map((score, playerIndex) => (
+              <React.Fragment key={holeIndex}>
+                <tr className='border-b'>
                   <td
-                    key={playerIndex}
-                    className="border p-2 text-center cursor-pointer"
-                    onClick={() => toggleEditingScore(holeIndex, playerIndex, score)}
+                    className="p-1 text-center cursor-pointer min-w-20 flex items-center bg-blue-500 justify-around gap-1"
+                    onClick={() => toggleEditingPar(holeIndex)}
                   >
-                    {editingScore.hole === holeIndex && editingScore.player === playerIndex ? (
+                    <p className='font-bold text-xl flex items-center bg-gray-200 text-[#242424] justify-center border rounded-full aspect-ratio aspect-ratio-1/1 w-8 h-8 p-1'>{holeIndex + 1}</p>
+                    {editingPar === holeIndex ? (
                       <div className='flex justify-center items-center'>
                         <input
-                          value={editingScore.value}
-                          onChange={(e) => handleScoreChange(holeIndex, playerIndex, e.target.value)}
-                          className="w-12 text-center border rounded"
+                          ref={el => parInputRefs.current[holeIndex] = el}
+                          value={par[holeIndex]}
+                          onChange={(e) => handleParChange(holeIndex, e.target.value)}
+                          onKeyDown={(e) => handleParKeyDown(e, holeIndex)} // Handle Enter key press
+                          className="w-8 text-center border rounded"
                           onClick={(e) => e.stopPropagation()}
+                          inputMode="numeric"
                         />
                         <FaCheck
                           className="bg-green-500 text-white p-1 ml-4 rounded"
                           onClick={(e) => {
                             e.stopPropagation();
-                            saveScore(holeIndex, playerIndex);
+                            savePar(holeIndex);
                           }}
                           size={20}
                         />
                       </div>
                     ) : (
-                      <p>{score === 0 ? '-' : score}</p>
+                      <p className='flex items-center h-full'>P: {par[holeIndex]}</p>
                     )}
                   </td>
-                ))}
-              </tr>
+                  {holeScores.map((score, playerIndex) => (
+                    <td
+                      key={playerIndex}
+                      className="border p-2 text-center cursor-pointer"
+                      onClick={() => toggleEditingScore(holeIndex, playerIndex, score)}
+                    >
+                      {editingScore.hole === holeIndex && editingScore.player === playerIndex ? (
+                        <div className='flex justify-center items-center'>
+                          {/* <input
+                            ref={el => scoreInputRefs.current[`${holeIndex}-${playerIndex}`] = el}
+                            value={editingScore.value}
+                            onChange={(e) => handleScoreChange(holeIndex, playerIndex, e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(e, holeIndex, playerIndex)} // Handle Enter key press
+                            className="w-12 text-center border rounded"
+                            onClick={(e) => e.stopPropagation()}
+                            inputMode="numeric"
+                          /> */}
+                          <input
+                            ref={el => scoreInputRefs.current[`${holeIndex}-${playerIndex}`] = el}
+                            value={editingScore.value}
+                            onChange={(e) => handleScoreChange(holeIndex, playerIndex, e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(e, holeIndex, playerIndex)} // Handle Enter key press
+                            className="w-12 text-center border rounded"
+                            onClick={(e) => e.stopPropagation()}
+                            inputMode="numeric"
+                          />
+                          <FaCheck
+                            className="bg-green-500 text-white p-1 ml-4 rounded"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              saveScore(holeIndex, playerIndex);
+                            }}
+                            size={20}
+                          />
+                        </div>
+                      ) : (
+                        <p>{score === 0 ? '-' : score}</p>
+                      )}
+                    </td>
+                  ))}
+                </tr>
+
+                {/* Front Nine Total Row */}
+                {holeIndex === 8 && (
+                  <tr className='bg-blue-500'>
+                    <td className="border p-2 font-bold">Front Score:</td>
+                    {players.map((_, playerIndex) => (
+                      <td key={playerIndex} className="border p-2">
+                        {scores.slice(0, 9).reduce((acc, holeScores) => acc + holeScores[playerIndex], 0)}
+                      </td>
+                    ))}
+                  </tr>
+                )}
+
+                {/* Back Nine Total Row */}
+                {holeIndex === 17 && (
+                  <tr className='bg-blue-500'>
+                    <td className="border p-2 font-bold">Back Score:</td>
+                    {players.map((_, playerIndex) => (
+                      <td key={playerIndex} className="border p-2">
+                        {scores.slice(9).reduce((acc, holeScores) => acc + holeScores[playerIndex], 0)}
+                      </td>
+                    ))}
+                  </tr>
+                )}
+{holeIndex === 17 && (
+  <tr className='bg-blue-500'>
+    <td className="border p-2 font-bold">{par.reduce((acc, p) => acc + p, 0)}</td> 
+    {players.map((_, playerIndex) => (
+      <td key={playerIndex} className="border p-2">
+        {scores.reduce((acc, holeScores) => acc + holeScores[playerIndex], 0)}
+      </td>
+    ))}
+  </tr>
+)}
+
+                {/* Total Score Row */}
+                {/* {holeIndex === 17 && (
+                  <tr className='bg-blue-500'>
+                    <td className="border p-2 font-bold">Total Score:</td>
+                    {players.map((_, playerIndex) => (
+                      <td key={playerIndex} className="border p-2">
+                        {scores.reduce((acc, holeScores) => acc + holeScores[playerIndex], 0)}
+                      </td>
+                    ))}
+                  </tr>
+                )} */}
+
+              </React.Fragment>
             ))}
-            <tr>
-              <td className="border p-2 font-bold">
-                {par.reduce((sum, p) => sum + p, 0)} {/* Total Par for the course */}
-              </td>
-              {players.map((_, playerIndex) => {
-                const totalScore = scores.reduce((sum, holeScores) => sum + (holeScores[playerIndex] || 0), 0);
-                return (
-                  <td key={playerIndex} className="border p-2 font-bold">
-                    {totalScore} | {totalScore - par.reduce((sum, p) => sum + p, 0)}
-                  </td>
-                );
-              })}
-            </tr>
           </tbody>
         </table>
       </div>
-
-
       <button
-        className="w-1/2 bg-red-500 text-white p-2 mt-4 rounded-3xl"
-        onClick={() => {
-          setToggleResetModal(true)
-        }}
+        onClick={() => setToggleResetModal(true)}
+        className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
       >
         Reset
       </button>
-      {toggleResetModal ? (
-        <div className='w-screen h-screen fixed bg-gray-400 bg-opacity-50 bottom-0 left-0 flex flex-col items-center p-4 gap-4'>
-          <div className='flex flex-col items-center opacity-100 gap-4 bg-black p-8 rounded w-full mt-36'>
-            <p>Are you sure?</p>
-            <button 
-              onClick={() => setToggleResetModal(false)}
-              className='w-1/2 bg-green-700 rounded-3xl'
-            >No, go back</button>
-            <button 
-              onClick={() => {
-                handleReset()
-                setToggleResetModal(false)
-              }}
-              className='w-1/2 bg-red-700 rounded-3xl'
-            >Yes, reset</button>
+
+      {toggleResetModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75">
+          <div className="bg-white p-4 rounded">
+            <p className="text-lg">Are you sure you want to reset all data?</p>
+            <div className="flex gap-4 mt-4">
+              <button
+                onClick={() => {
+                  handleReset();
+                  setToggleResetModal(false);
+                }}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => setToggleResetModal(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded"
+              >
+                No
+              </button>
+            </div>
           </div>
         </div>
-      ) : ''}
+      )}
     </div>
   );
 };
 
 export default App;
+
+
+// import React from 'react';
+// import PlayerInput from './PlayerInput';
+// import { FaCheck } from 'react-icons/fa';
+// import { GiFrisbee } from 'react-icons/gi';
+// import useDiscGolfState from './useDiscGolfState';
+// import Table from './Table'; // New Table component
+
+// const App = () => {
+//   const {
+//     players,
+//     scores,
+//     par,
+//     editingPar,
+//     editingScore,
+//     toggleResetModal,
+//     scoreInputRefs,
+//     parInputRefs,
+//     setPlayers,
+//     setScores,
+//     setPar,
+//     setEditingPar,
+//     setEditingScore,
+//     setToggleResetModal,
+//     handleAddPlayer,
+//     handleScoreChange,
+//     saveScore,
+//     handleParChange,
+//     toggleEditingPar,
+//     handleParKeyDown,
+//     savePar,
+//     toggleEditingScore,
+//     handleReset
+//   } = useDiscGolfState();
+
+//   return (
+//     <div className="container p-4 py-24 w-screen max-w-screen overflow-hidden flex flex-col items-center">
+//       <header className='w-full fixed top-0 flex items-center justify-center gap-4 mb-8 bg-white'>
+//         <GiFrisbee size={50} className='text-blue-500' />
+//         <h1 className="text-4xl font-bold text-blue-500">DiscScore</h1>
+//       </header>
+
+//       <PlayerInput onAddPlayer={handleAddPlayer} />
+
+//       <div className='w-screen max-w-full overflow-x-scroll'>
+//         <Table
+//           players={players}
+//           scores={scores}
+//           par={par}
+//           editingPar={editingPar}
+//           editingScore={editingScore}
+//           scoreInputRefs={scoreInputRefs}
+//           parInputRefs={parInputRefs}
+//           toggleEditingPar={toggleEditingPar}
+//           handleParChange={handleParChange}
+//           handleParKeyDown={handleParKeyDown}
+//           savePar={savePar}
+//           toggleEditingScore={toggleEditingScore}
+//           handleScoreChange={handleScoreChange}
+//           saveScore={saveScore}
+//         />
+//       </div>
+
+//       <button
+//         onClick={() => setToggleResetModal(true)}
+//         className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
+//       >
+//         Reset
+//       </button>
+
+//       {toggleResetModal && (
+//         <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75">
+//           <div className="bg-white p-4 rounded">
+//             <p className="text-lg">Are you sure you want to reset all data?</p>
+//             <div className="flex gap-4 mt-4">
+//               <button
+//                 onClick={() => {
+//                   handleReset();
+//                   setToggleResetModal(false);
+//                 }}
+//                 className="bg-red-500 text-white px-4 py-2 rounded"
+//               >
+//                 Yes
+//               </button>
+//               <button
+//                 onClick={() => setToggleResetModal(false)}
+//                 className="bg-gray-500 text-white px-4 py-2 rounded"
+//               >
+//                 No
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default App;
