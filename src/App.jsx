@@ -88,7 +88,7 @@ const App = () => {
   
 
   const handleParKeyDown = (e, holeIndex) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' || e.type === 'blur') {
       e.preventDefault();
       savePar(holeIndex);
     }
@@ -185,6 +185,7 @@ const App = () => {
                           value={par[holeIndex]}
                           onChange={(e) => handleParChange(holeIndex, e.target.value)}
                           onKeyDown={(e) => handleParKeyDown(e, holeIndex)} // Handle Enter key press
+                          onBlur={(e) => handleParKeyDown(e, holeIndex)} // Handle Enter key press
                           className="w-8 text-center border rounded bg-[#242424] text-gray-200"
                           onClick={(e) => e.stopPropagation()}
                           inputMode="numeric"
