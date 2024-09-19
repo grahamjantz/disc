@@ -185,7 +185,7 @@ const App = () => {
                           value={par[holeIndex]}
                           onChange={(e) => handleParChange(holeIndex, e.target.value)}
                           onKeyDown={(e) => handleParKeyDown(e, holeIndex)} // Handle Enter key press
-                          className="w-8 text-center border rounded"
+                          className="w-8 text-center border rounded bg-[#242424] text-gray-200"
                           onClick={(e) => e.stopPropagation()}
                           inputMode="numeric"
                         />
@@ -224,7 +224,7 @@ const App = () => {
                             value={editingScore.value}
                             onChange={(e) => handleScoreChange(holeIndex, playerIndex, e.target.value)}
                             onKeyDown={(e) => handleKeyDown(e, holeIndex, playerIndex)} // Handle Enter key press
-                            className="w-12 text-center border rounded"
+                            className="w-12 text-center border rounded bg-[#242424] text-gray-200"
                             onClick={(e) => e.stopPropagation()}
                             inputMode="numeric"
                           />
