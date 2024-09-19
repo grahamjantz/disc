@@ -18,11 +18,11 @@ const PlayerInput = ({ onAddPlayer }) => {
                 value={playerName}
                 onChange={(e) => setPlayerName(e.target.value)}
                 placeholder="Enter player name"
-                className="border-blue-500 border-l border-t border-b p-2 px-6 w-full rounded-l-3xl "  
+                className="border-blue-500 border-l border-t border-b p-2 px-6 w-full rounded-l-3xl rounded-r-none bg-[#242424] text-gray-200"  
             />
             <button 
                 onClick={handleAddPlayer}
-                className="bg-blue-500 text-white p-2 px-6 h-full border-t border-r border-b rounded-r-3xl"
+                className="bg-blue-500 text-white p-2 px-6 h-full border-t border-r border-b rounded-r-3xl rounded-l-none"
             >
                 Add 
             </button>

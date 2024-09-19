@@ -267,29 +267,16 @@ const App = () => {
                     ))}
                   </tr>
                 )}
-{holeIndex === 17 && (
-  <tr className='bg-blue-500'>
-    <td className="border p-2 font-bold">{par.reduce((acc, p) => acc + p, 0)}</td> 
-    {players.map((_, playerIndex) => (
-      <td key={playerIndex} className="border p-2">
-        {scores.reduce((acc, holeScores) => acc + holeScores[playerIndex], 0)}
-      </td>
-    ))}
-  </tr>
-)}
-
-                {/* Total Score Row */}
-                {/* {holeIndex === 17 && (
+                {holeIndex === 17 && (
                   <tr className='bg-blue-500'>
-                    <td className="border p-2 font-bold">Total Score:</td>
+                    <td className="border p-2 font-bold">{par.reduce((acc, p) => acc + p, 0)}</td> 
                     {players.map((_, playerIndex) => (
                       <td key={playerIndex} className="border p-2">
                         {scores.reduce((acc, holeScores) => acc + holeScores[playerIndex], 0)}
                       </td>
                     ))}
                   </tr>
-                )} */}
-
+                )}
               </React.Fragment>
             ))}
           </tbody>
