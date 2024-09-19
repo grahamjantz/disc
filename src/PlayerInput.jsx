@@ -11,20 +11,22 @@ const PlayerInput = ({ onAddPlayer }) => {
   };
 
   return (
-    <div className="mb-4 flex flex-col items-center">
+    <div className="w-full mb-4 flex flex-col items-center">
         <h2 className="text-lg mb-2">Enter Player Name</h2>
-        <input
-            value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
-            placeholder="Enter player name"
-            className="border p-2 mb-2 w-full"  
-        />
-        <button 
-            onClick={handleAddPlayer}
-            className="bg-blue-500 text-white p-2"
-        >
-            Add Player
-        </button>
+        <div className='w-full flex items-center py-4'>
+            <input
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                placeholder="Enter player name"
+                className="border-blue-500 border-l border-t border-b p-2 px-6 w-full rounded-l-3xl "  
+            />
+            <button 
+                onClick={handleAddPlayer}
+                className="bg-blue-500 text-white p-2 px-6 h-full border-t border-r border-b rounded-r-3xl"
+            >
+                Add 
+            </button>
+        </div>
         </div>
 
   );
