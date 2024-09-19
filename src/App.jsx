@@ -138,7 +138,7 @@ const App = () => {
 
   // Submit score when Enter is pressed
   const handleKeyDown = (e, hole, playerIndex) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' || e.type === 'blur') {
       e.preventDefault();
       saveScore(hole, playerIndex);
     }
@@ -224,6 +224,7 @@ const App = () => {
                             value={editingScore.value}
                             onChange={(e) => handleScoreChange(holeIndex, playerIndex, e.target.value)}
                             onKeyDown={(e) => handleKeyDown(e, holeIndex, playerIndex)} // Handle Enter key press
+                            onBlur={(e) => handleKeyDown(e, holeIndex, playerIndex)} // Handle Enter key press
                             className="w-12 text-center border rounded bg-[#242424] text-gray-200"
                             onClick={(e) => e.stopPropagation()}
                             inputMode="numeric"
