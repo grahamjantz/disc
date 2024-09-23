@@ -12,7 +12,7 @@ const PlayerInput = ({ onAddPlayer }) => {
 
   return (
     <div className="w-full mb-4 flex flex-col items-center">
-        <h2 className="text-lg mb-2">Enter Player Name</h2>
+        <h2 className="text-lg mb-2">Players:</h2>
         <div className='w-full flex items-center py-4'>
             <input
                 value={playerName}
