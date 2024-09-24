@@ -14,9 +14,11 @@ const PlayerScores = ({
     editingScore,
     setEditingScore,
     setEditingPar,
+    setPlayers,
 }) => {
     const parInputRefs = useRef([]);
     const scoreInputRefs = useRef({});
+    const playerInputRefs = useRef([]); // Ref for player name inputs
     const [editingPlayerIndex, setEditingPlayerIndex] = useState(null);
     const [editedPlayerName, setEditedPlayerName] = useState('');
 
@@ -37,6 +39,14 @@ const PlayerScores = ({
             }
         }
     }, [editingScore]);
+
+    // Focus player input when editingPlayerIndex changes
+    useEffect(() => {
+        if (editingPlayerIndex !== null && playerInputRefs.current[editingPlayerIndex]) {
+            playerInputRefs.current[editingPlayerIndex].focus();
+            playerInputRefs.current[editingPlayerIndex].select(); // Highlight the text
+        }
+    }, [editingPlayerIndex]);
 
     const toggleEditingPar = (holeIndex) => {
         setEditingPar(editingPar === holeIndex ? null : holeIndex);
@@ -65,20 +75,24 @@ const PlayerScores = ({
             updatedPlayers[index] = editedPlayerName;
             // Update localStorage
             localStorage.setItem('players', JSON.stringify(updatedPlayers));
+
+            setPlayers(updatedPlayers);
             setEditingPlayerIndex(null);
         }
     };
+    
 
     return (
         <div className='w-screen max-w-full overflow-x-scroll'>
             <table className="table-auto w-full text-center border">
-                <thead>
+                <thead className=''>
                     <tr>
                         <th className="border p-2 max-w-20 w-20 bg-blue-500">Hole</th>
                         {players.map((player, index) => (
-                            <th key={index} className="border p-1 min-w-20 max-w-20 overflow-hidden bg-blue-500">
+                            <th key={index} className="border p-1 w-30 min-w-30 max-w-30 overflow-hidden bg-blue-500">
                                 {editingPlayerIndex === index ? (
                                     <input
+                                        ref={(el) => (playerInputRefs.current[index] = el)} // Store ref for each player input
                                         value={editedPlayerName}
                                         onChange={handlePlayerNameChange}
                                         onKeyDown={(e) => handlePlayerNameKeyDown(e, index)}
@@ -132,7 +146,7 @@ const PlayerScores = ({
                                             />
                                         </div>
                                     ) : (
-                                        <p className='flex items-center h-full'>P: {par[holeIndex]}</p>
+                                        <p className='flex items-center h-full'>{par[holeIndex]}</p>
                                     )}
                                 </td>
                                 {holeScores.map((score, playerIndex) => {
@@ -175,50 +189,65 @@ const PlayerScores = ({
                             {/* Front Nine Total Row */}
                             {holeIndex === 8 && (
                                 <tr className='bg-blue-500'>
-                                    <td className="border font-bold max-w-20 w-20 ">Front Score:</td>
+                                    <td className="border font-bold max-w-20 w-20 ">Front:</td>
                                     {players.map((_, playerIndex) => {
                                         const frontScore = scores.slice(0, 9).reduce((acc, holeScores) => acc + holeScores[playerIndex], 0);
                                         const frontPar = par.slice(0, 9).reduce((acc, p) => acc + p, 0);
                                         const frontDiff = frontScore - frontPar;
+
                                         return (
-                                            <td key={playerIndex} className="border p-2">
-                                                <div className='w-full flex justify-around items-center'><p>{frontScore}</p> | <p>{frontDiff}</p></div>
+                                            <td key={playerIndex} className="border py-3 px-2">
+                                                <div className='w-full flex justify-center items-center gap-4'>
+                                                    <p className='w-1/3'>{frontScore}</p>
+                                                    <p className='w-1/3'>|</p>
+                                                    <p className='w-1/3'>{frontDiff}</p>
+                                                </div>
                                             </td>
                                         );
                                     })}
                                 </tr>
                             )}
                             {/* Back Nine Total Row */}
-                            {holeIndex === 17 && (
-                                <tr className='bg-blue-500'>
-                                    <td className="border font-bold max-w-20 w-20">Back Score:</td>
-                                    {players.map((_, playerIndex) => {
-                                        const backScore = scores.slice(9).reduce((acc, holeScores) => acc + holeScores[playerIndex], 0);
-                                        const backPar = par.slice(9).reduce((acc, p) => acc + p, 0);
-                                        const backDiff = backScore - backPar;
-                                        return (
-                                            <td key={playerIndex} className="border p-2">
-                                                <div className='w-full flex justify-around items-center'><p>{backScore}</p> | <p>{backDiff}</p></div>
-                                            </td>
-                                        );
-                                    })}
-                                </tr>
-                            )}
-                            {/* Total Score Row */}
-                            {holeIndex === 17 && (
-                                <tr className='bg-blue-500'>
-                                    <td className="border font-bold max-w-20 w-20">Total Score:</td>
-                                    {players.map((_, playerIndex) => {
-                                        const totalScore = scores.reduce((acc, holeScores) => acc + holeScores[playerIndex], 0);
-                                        const totalPar = par.reduce((acc, p) => acc + p, 0);
-                                        const totalDiff = totalScore - totalPar;
-                                        return (
-                                            <td key={playerIndex} className="border p-2">
-                                                <div className='w-full flex justify-around items-center'><p>{totalScore}</p> | <p>{totalDiff}</p></div>
-                                            </td>
-                                        );
-                                    })}
-                                </tr>
+                            {holeIndex === scores.length - 1 && (
+                                <>
+                                    <tr className='bg-blue-500'>
+                                        <td className="border font-bold max-w-20 w-20">Back:</td>
+                                        {players.map((_, playerIndex) => {
+                                            const backScore = scores.slice(9).reduce((acc, holeScores) => acc + holeScores[playerIndex], 0);
+                                            const backPar = par.slice(9).reduce((acc, p) => acc + p, 0);
+                                            const backDiff = backScore - backPar;
+
+                                            return (
+                                                <td key={playerIndex} className="border py-3 px-2">
+                                                    <div className='w-full flex justify-center items-center gap-4'>
+                                                        <p className='w-1/3'>{backScore}</p>
+                                                        <p className='w-1/3'>|</p>
+                                                        <p className='w-1/3'>{backDiff}</p>
+                                                    </div>
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                    {holeIndex === 17 && (
+                                 <tr className='bg-blue-600'>
+                                     <td className="border font-bold max-w-20 w-20">{par.reduce((acc, p) => acc + p, 0)}</td>
+                                     {players.map((_, playerIndex) => {
+                                         const totalScore = scores.reduce((acc, holeScores) => acc + holeScores[playerIndex], 0);
+                                         const totalPar = par.reduce((acc, p) => acc + p, 0);
+                                         const totalDiff = totalScore - totalPar;
+                                         return (
+                                             <td key={playerIndex} className="border py-3 px-2">
+                                                <div className='w-full flex justify-center items-center gap-4'>
+                                                    <p className='w-1/3'>{totalScore}</p>
+                                                    <p className='w-1/3'>|</p>
+                                                    <p className='w-1/3'>{totalDiff}</p>
+                                                </div>
+                                             </td>
+                                         );
+                                     })}
+                                 </tr>
+                             )}
+                                </>
                             )}
                         </React.Fragment>
                     ))}

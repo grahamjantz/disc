@@ -2,7 +2,6 @@ import React from 'react';
 
 const SelectCourse = ({ courses, onSelectCourse, }) => {
 
-    console.log(courses)
 
   const handleChange = (event) => {
     const selectedCourse = event.target.value;
